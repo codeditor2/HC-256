@@ -72,7 +72,7 @@ static MSFilterDesc msencrypt_filter={
 static void msencrypt_init(MSFilter *f)
 {
     EncState *s=ms_new0(EncState,1);
-    f->data=s;
+    int i;
 
     s->Key = Key;
     s->IV = IV;
@@ -81,11 +81,12 @@ static void msencrypt_init(MSFilter *f)
     init(s->hc256, s->Key, s->IV);
 
     s->table = (uint32_t *)malloc(sizeof(uint32_t) * 4096);
-    for (int i = 0; i < 4096; i++)
+    for (i = 0; i < 4096; i++)
 	s->table[i] = keygen(s->hc256);
 
     s->round = 0;
-    ortp_message("msencrypt_init");
+    f->data=s;
+    ortp_message("msencrypt_init-------");
 }
 
 static void msencrypt_uninit(MSFilter *f)
@@ -199,6 +200,7 @@ static void msencrypt_postprocess(MSFilter *f)
 static int enc_add_attr(MSFilter *f, void *arg)
 {
 	EncState *s=(EncState*)f->data;
+	int i;
 
 	if (!s->Key)
 		free(s->Key);
@@ -254,7 +256,7 @@ static int enc_add_attr(MSFilter *f, void *arg)
 	init(s->hc256, s->Key, s->IV);
 	
 	s->table = (uint32_t *)malloc(sizeof(uint32_t) * 4096);
-	for (int i = 0; i < 4096; i++)
+	for (i = 0; i < 4096; i++)
 		s->table[i] = keygen(s->hc256);
 	
 	ortp_message("enc_add_attr");
@@ -301,6 +303,7 @@ static MSFilterDesc msdecrypt_filter={
 static void msdecrypt_init(MSFilter *f)
 {
     DecState *s=ms_new0(DecState,1);
+    int i;
     f->data=s;
 
     s->Key = Key;
@@ -312,7 +315,7 @@ static void msdecrypt_init(MSFilter *f)
     init(s->hc256, s->Key, s->IV);
 
     s->table = (uint32_t *)malloc(sizeof(uint32_t) * 4096);
-    for (int i = 0; i < 4096; i++)
+    for (i = 0; i < 4096; i++)
 	s->table[i] = keygen(s->hc256);
 
     s->inited = 0;
@@ -350,6 +353,7 @@ static void msdecrypt_process(MSFilter *f)
     KeyItem km;
     uint32_t key;
     unsigned char * pr;
+    int i;
 
     while((im = ms_queue_get(f->inputs[0])) != NULL) {
 	memcpy(&fh, im->b_rptr, sizeof(FrameHeader));
@@ -382,7 +386,7 @@ static void msdecrypt_process(MSFilter *f)
 	    s->IV[7] = s->table[ki.IV7];
 
 	    init(s->hc256, s->Key, s->IV);
-	    for (int i = 0; i < 4096; i++)
+	    for (i = 0; i < 4096; i++)
 		s->table[i] = keygen(s->hc256);
 
 	    s->inited = 1;
@@ -404,6 +408,7 @@ static void msdecrypt_postprocess(MSFilter *f)
 static int dec_add_attr(MSFilter *f, void *arg)
 {
 	DecState *s=(DecState*)f->data;
+	int i;
 
 	if (!s->Key)
 		free(s->Key);
@@ -459,7 +464,7 @@ static int dec_add_attr(MSFilter *f, void *arg)
 	init(s->hc256, s->Key, s->IV);
 	
 	s->table = (uint32_t *)malloc(sizeof(uint32_t) * 4096);
-	for (int i = 0; i < 4096; i++)
+	for (i = 0; i < 4096; i++)
 		s->table[i] = keygen(s->hc256);
 
 	ortp_message("enc_add_attr");

@@ -64,11 +64,18 @@ int main(int argc, char **argv)
 	printf("driver:%s\n", card->desc->driver_type);
 	list = list->next;
     }
-    printf("2\n");
-    stream->soundread = ms_snd_card_create_reader(sndcard);
-    printf("3\n");
+    if(sndcard != NULL)
+    {
+	stream->soundread = ms_snd_card_create_reader(sndcard);
+    }
+    else 
+    {
+	stream->soundread=ms_filter_new(MS_FILE_PLAYER_ID);
+	audio_stream_play(stream, "test.wav");
+	printf("\n\nread from file\n\n");	
+    }
+
     stream->crypto = ms_filter_new_from_name("Encrypt");
-    printf("4\n");
     stream->encoder = ms_filter_create_encoder("SPEEX");
     stream->rtpsend=ms_filter_new(MS_RTP_SEND_ID);
     
@@ -80,7 +87,6 @@ int main(int argc, char **argv)
     ms_filter_link(stream->soundread, 0, stream->encoder, 0);
     ms_filter_link(stream->encoder, 0, stream->crypto, 0);
     ms_filter_link(stream->crypto, 0, stream->rtpsend, 0);
-    printf("8\n");
 
     stream->ticker = ms_ticker_new();
     ms_ticker_set_name(stream->ticker, "recv stream");
